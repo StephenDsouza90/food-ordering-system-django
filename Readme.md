@@ -1,10 +1,10 @@
-# Food Ordering System (Django)
+## WIP
 
-This app is currently in process.
+# Food Ordering System (written with Django)
 
 ## Introduction
 
-This application is a simple food ordering system which has two interfaces i.e. Employee and Customer.
+This application is a simple food ordering system written in Django which has two interfaces i.e. Employee and Customer.
 
 Both users can interact with the system through several options to perfrom an activity.
 
