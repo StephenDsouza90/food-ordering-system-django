@@ -7,10 +7,9 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 
-from .models import Employee, Customer, get_grand_total
+from .models import Employee, Customer, DeliveryPerson, get_grand_total, view_order, view_order_status, view_order_total
 
 
-# Create your views here.
 def index(request):
     """ Home page """
 
@@ -94,6 +93,83 @@ def assign_deliver_person_to_deliver_order(request):
         return JsonResponse(DictObj)
 
 
+@csrf_exempt
+def update_order(request):
+    """
+    >> curl -H "Content-Type: application/json" -X PUT -d "{\"order_id\":1, \"order_status\":\"En route\"}" http://127.0.0.1:8000/employees/update-order
+    >> curl -H "Content-Type: application/json" -X PUT -d "{\"order_id\":1, \"order_status\":\"Delivered\"}" http://127.0.0.1:8000/employees/update-order
+    """
+
+    if request.method == 'PUT':
+        json_data = json.loads(request.body)
+        order_id = json_data["order_id"]
+        order_status = json_data["order_status"]
+        DeliveryPerson.update_order(request, order_id, order_status)
+        DictObj = {
+            "order_id": order_id,
+            "order_status": order_status
+        }
+        return JsonResponse(DictObj)
+
+
+@csrf_exempt
+def view_sales_today(request):
+    """
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_status\":\"'Delivered'\"}" http://127.0.0.1:8000/employees/view-sales-today
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_status\":\"'En route'\"}" http://127.0.0.1:8000/employees/view-sales-today
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_status\":\"'Checked out'\"}" http://127.0.0.1:8000/employees/view-sales-today
+    """
+
+    if request.method == 'GET':
+        json_data = json.loads(request.body)
+        order_status = json_data["order_status"]
+        sales_today = Employee.view_sales_today(request, order_status)
+        result = []
+        for i in sales_today:
+            sales_dict = {
+                "order_id": i[0],
+                "customer_name": i[1],
+                "order_status": i[2],
+                "bill_amount": i[3],
+                "date_time": i[4]
+                }
+            result.append(sales_dict)
+        return JsonResponse(result, safe=False)
+
+
+@csrf_exempt
+def sum_revenue_today(request):
+    """
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_status\":\"'Delivered'\"}" http://127.0.0.1:8000/employees/sum-revenue-today
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_status\":\"'En route'\"}" http://127.0.0.1:8000/employees/sum-revenue-today
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_status\":\"'Checked out'\"}" http://127.0.0.1:8000/employees/sum-revenue-today
+    """
+
+    if request.method == 'GET':
+        json_data = json.loads(request.body)
+        order_status = json_data["order_status"]
+        sum_rev_today = Employee.sum_revenue_today(request, order_status)
+        for i in sum_rev_today:
+            DictObj = {
+                "today_revenue": i[0]
+                }
+        return JsonResponse(DictObj, safe=False)
+
+
+@csrf_exempt
+def delete_order(request):
+    """
+    >> curl -H "Content-Type: application/json" -XDELETE -d "{\"order_id\":1}" http://127.0.0.1:8000/employees/delete-order
+    """
+
+    if request.method == 'DELETE':
+        json_data = json.loads(request.body)
+        order_id = json_data["order_id"]
+        Employee.delete_order(request, order_id)
+        DictObj = {
+            "order_id": order_id
+        }
+        return JsonResponse(DictObj)
 
 
 ### Customer's func and routes
@@ -114,7 +190,7 @@ def view_menu(request):
                 "food_id": m.id,
                 "food_name": m.food_name,
                 "price": m.price
-                }
+            }
             result.append(DictObj)
         return JsonResponse(result, safe=False)
 
@@ -151,7 +227,7 @@ def customer_login(request, cust_id):
         DictObj = {
             "cust_id": cust.id,
             "cust_name": cust.cust_name
-            }
+        }
         return JsonResponse(DictObj, safe=False)
 
 
@@ -168,7 +244,7 @@ def create_order_id(request, cust_id):
         DictObj = {
             "order_id": gen_order_id.id,
             "cust_id": gen_order_id.cust_id_id
-            }
+        }
         return JsonResponse(DictObj)
 
 
@@ -188,7 +264,7 @@ def add_food_to_order(request, cust_id):
             "order_id": add_food.order_id_id,
             "food_id": add_food.food_id_id,
             "food_qty": add_food.food_qty
-            }
+        }
         return JsonResponse(DictObj)
 
 
@@ -206,7 +282,7 @@ def remove_food_to_order(request, cust_id):
         DictObj = {
             "order_id": order_id,
             "food_id": food_id
-            }
+        }
         return JsonResponse(DictObj)
 
 
@@ -226,7 +302,7 @@ def update_food_to_order(request, cust_id):
             "order_id": order_id,
             "food_id": food_id,
             "food_qty": food_qty
-            }
+        }
         return JsonResponse(DictObj)
 
 
@@ -252,7 +328,7 @@ def checkout(request, cust_id):
             "order_address": order_address,
             "estimated_time": estimated_time,
             "bill_amount": bill_amount
-            }
+        }
         return JsonResponse(DictObj)
 
 
@@ -270,5 +346,76 @@ def cancel_order(request, cust_id):
         DictObj = {
             "order_id": order_id,
             "order_status": order_status
-            }
+        }
         return JsonResponse(DictObj)
+
+
+### Common func and routes
+
+@csrf_exempt
+def view_order_by_id(request, cust_id):
+    """
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_id\":1}" http://127.0.0.1:8000/customers/1/view-order
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_id\":1}" http://127.0.0.1:8000/employees/1/view-order
+    """
+
+    if request.method == 'GET':
+        json_data = json.loads(request.body)
+        order_id = json_data["order_id"]
+        view_order_item = view_order(order_id)
+        found_result = False
+        result = []
+        for i in view_order_item:
+            DictObj = {
+                "food_category": i.food_id.category_id.category_name,
+                "food_name": i.food_id.food_name,
+                "food_price": i.food_id.price,
+                "food_quantity": i.food_qty,
+                "total_per_item": (i.food_id.price*i.food_qty)
+                }
+            result.append(DictObj)
+            found_result = True
+        if found_result:
+            return JsonResponse(result, safe=False)
+
+
+@csrf_exempt
+def view_order_status_by_id(request, cust_id):
+    """
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_id\":1}" http://127.0.0.1:8000/customers/1/view-order-status
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_id\":1}" http://127.0.0.1:8000/employees/1/view-order-status
+    """
+
+    if request.method == 'GET':
+        json_data = json.loads(request.body)
+        order_id = json_data["order_id"]
+        view_status = view_order_status(order_id)
+        for i in view_status:
+            DictObj = {
+                "customer_name": i.cust_id.cust_name,
+                "order_id": i.id,
+                "order_status": i.order_status,
+                "total_bill": i.bill_amount,
+                "delivery_person_name": i.delivery_person_id.delivery_person_name
+            }
+            return JsonResponse(DictObj)
+
+
+@csrf_exempt
+def view_order_total_by_id(request, cust_id):
+    """
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_id\":1}" http://127.0.0.1:8000/customers/1/view-order-total
+    >> curl -H "Content-Type: application/json" -X GET -d "{\"order_id\":1}" http://127.0.0.1:8000/employees/1/view-order-total
+    """
+
+    if request.method == 'GET':
+        json_data = json.loads(request.body)
+        order_id = json_data["order_id"]
+        view_order = view_order_total(order_id)
+        for i in view_order:
+            DictObj = {
+                "customer_name": i.cust_id.cust_name,
+                "order_id": i.id,
+                "grand_total": i.bill_amount
+            }
+            return JsonResponse(DictObj)
