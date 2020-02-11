@@ -18,9 +18,6 @@ def index(request):
 
 def request_method(request):
     """ Func that handles methods and decoding data """
-    # In Python, json.loads() only accept a unicode string, 
-    # so you must decode "request.body (which is a byte string)" 
-    # before passing it to json.loads().
 
     methods = ['POST', 'PUT', 'DELETE', 'GET']
     if request.method in methods:
@@ -56,7 +53,8 @@ def add_food_details(request):
     category_id = json_data['category_id_id']
     food_name = json_data['food_name']
     price = json_data['price']
-    food_details = Employee.add_food_details(request, category_id, food_name, price)
+    food_details = Employee.add_food_details(request, 
+        category_id, food_name, price)
     DictObj = {
         "category_id": food_details.category_id_id,
         "food_id": food_details.id,
@@ -75,7 +73,8 @@ def add_delivery_person(request):
     json_data = request_method(request)
     delivery_person_name = json_data['delivery_person_name']
     delivery_person_phone = json_data['delivery_person_phone']
-    del_person_details = Employee.add_delivery_person(request, delivery_person_name, delivery_person_phone)
+    del_person_details = Employee.add_delivery_person(request, 
+        delivery_person_name, delivery_person_phone)
     DictObj = {
         "delivery_person_id": del_person_details.id,
         "delivery_person_name": del_person_details.delivery_person_name,
@@ -93,7 +92,8 @@ def assign_deliver_person_to_deliver_order(request):
     json_data = request_method(request)
     order_id = json_data["order_id"]
     delivery_person_id = json_data["delivery_person_id"]
-    Employee.assign_deliver_person_to_deliver_order(request, order_id, delivery_person_id)
+    Employee.assign_deliver_person_to_deliver_order(request, 
+        order_id, delivery_person_id)
     DictObj = {
         "order_id": order_id,
         "delivery_person_id": delivery_person_id
@@ -208,7 +208,8 @@ def customer_signup(request):
     cust_name = json_data['cust_name']
     cust_phone = json_data['cust_phone']
     cust_email = json_data['cust_email']
-    cust_details = Customer.customer_signup(request, cust_name, cust_phone, cust_email)
+    cust_details = Customer.customer_signup(request, cust_name, 
+        cust_phone, cust_email)
     DictObj = {
         "cust_id": cust_details.id,
         "cust_name": cust_details.cust_name,
@@ -258,7 +259,8 @@ def add_food_to_order(request, cust_id):
     order_id = json_data["order_id"]
     food_id = json_data["food_id"]
     food_qty = json_data["food_qty"]
-    add_food = Customer.add_food_to_order(request, order_id, food_id, food_qty)
+    add_food = Customer.add_food_to_order(request, order_id, 
+        food_id, food_qty)
     DictObj = {
         "order_id": add_food.order_id_id,
         "food_id": add_food.food_id_id,
@@ -316,7 +318,8 @@ def checkout(request, cust_id):
     checkout_time = timezone.now()
     estimated_time = checkout_time + timedelta(minutes=30)
     bill_amount = get_grand_total(order_id)
-    Customer.checkout(request, order_id, order_status, order_address, checkout_time, estimated_time, bill_amount)
+    Customer.checkout(request, order_id, order_status, 
+        order_address, checkout_time, estimated_time, bill_amount)
     DictObj = {
         "order_id": order_id,
         "order_status": order_status,
