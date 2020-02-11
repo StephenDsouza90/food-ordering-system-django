@@ -1,5 +1,3 @@
-## WIP
-
 # Food Ordering System (written with Django)
 
 ## Introduction
@@ -28,22 +26,24 @@ The purpose of the tables in the databse is to store records when the Employee o
 
 For example - If an employee adds a food category and food detail so this will be stored in the Food Caterogy table and Food Details table respectively. When the customer will view the menu, so they will be able to see these items.
 
-## Employee and Customer class
-
-..
 
 ## How to run locally:
 
+
 ```
 >> python manage.py runserver
+Watching for file changes with StatReloader
+Performing system checks...
 
-..
+System check identified no issues (0 silenced).
+February 11, 2020 - 12:48:34
+Django version 3.0.2, using settings 'foodorderingsystem.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CTRL-BREAK.
 ```
 
-## Order process
-
-..
-
-## Files
-
-..
+Request for viewing menu
+```
+[11/Feb/2020 12:49:38] "GET /customers/view-menu HTTP/1.1" 200 470
+```
+![View menu](https://github.com/StephenDsouza90/food-ordering-system-django/blob/fos_django/Screenshots/view_menu.jpg)
